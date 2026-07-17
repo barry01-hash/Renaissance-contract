@@ -13,7 +13,7 @@
 //!   `transfer_points` calls.
 
 use renaissance_core::{get_event_topic_by_string, PlatformError};
-use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, Symbol};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, Symbol, Vec};
 
 // ── TTL ──────────────────────────────────────────────────────────────────────
 // Stellar produces ~1 ledger every 5 seconds. 30 days ≈ 518_400 ledgers.
@@ -87,7 +87,7 @@ impl FanRewardsContract {
         Ok(())
     }
 
-    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), PlatformError> {
+    pub fn upgrade(env: Env, caller: Address, new_wasm_hash: BytesN<32>) -> Result<(), PlatformError> {
         let platform: Address = env
             .storage()
             .instance()
@@ -103,7 +103,7 @@ impl FanRewardsContract {
             .instance()
             .get(&DataKey::TreasuryAdmin)
             .ok_or(PlatformError::Unauthorized)?;
-        let caller = env.invoker();
+        caller.require_auth();
         if caller != platform && caller != security && caller != treasury {
             return Err(PlatformError::Unauthorized);
         }
@@ -120,8 +120,8 @@ impl FanRewardsContract {
 
         if approvals.len() >= 2 {
             env.storage().instance().set(&DataKey::WasmHash, &new_wasm_hash);
-            env.deployer().update_current_contract_wasm(&new_wasm_hash);
-            env.storage().instance().set(&DataKey::UpgradeApprovals, &Vec::new(&env));
+            env.deployer().update_current_contract_wasm(new_wasm_hash.clone());
+            env.storage().instance().set(&DataKey::UpgradeApprovals, &Vec::<Address>::new(&env));
             env.events()
                 .publish((Symbol::new(&env, "Upgraded"),), new_wasm_hash);
         } else {

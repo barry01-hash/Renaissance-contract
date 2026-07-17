@@ -1,0 +1,30 @@
+name: Contracts CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  cargo-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+      - uses: Swatinem/rust-cache@v2
+      - name: Check workspace
+        run: cargo check --all
+      - name: Check contract WASM targets
+        run: |
+          cargo check -p renaissance-counter --target wasm32v1-none --release
+          cargo check -p renaissance-betting --target wasm32v1-none --release
+          cargo check -p renaissance-rewards --target wasm32v1-none --release
+          cargo check -p renaissance-player-nft --target wasm32v1-none --release
+          cargo check -p renaissance-oracle --target wasm32v1-none --release
+          cargo check -p renaissance-vault --target wasm32v1-none --release

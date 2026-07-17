@@ -909,9 +909,57 @@ dependencies = [
 ]
 
 [[package]]
-name = "renaissance-contract"
+name = "renaissance-betting"
 version = "0.1.0"
 dependencies = [
+ "renaissance-core",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "renaissance-core"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "renaissance-counter"
+version = "0.1.0"
+dependencies = [
+ "renaissance-core",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "renaissance-oracle"
+version = "0.1.0"
+dependencies = [
+ "renaissance-core",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "renaissance-player-nft"
+version = "0.1.0"
+dependencies = [
+ "renaissance-core",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "renaissance-rewards"
+version = "0.1.0"
+dependencies = [
+ "renaissance-core",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "renaissance-vault"
+version = "0.1.0"
+dependencies = [
+ "renaissance-core",
  "soroban-sdk",
 ]
 

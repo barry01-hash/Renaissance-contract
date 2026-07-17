@@ -7,7 +7,7 @@
 //! and distribute payouts to winners. Implements reentrancy protection and strict access controls.
 
 use renaissance_core::{get_event_topic_by_string, PlatformError};
-use soroban_sdk::{contract, contractimpl, contracttype, token, Address, Env, IntoVal, Vec};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, token, Address, Env, Symbol};
 
 // ── Balance structures ─────────────────────────────────────────────────────────
 
@@ -117,10 +117,7 @@ impl RenaissanceVaultContract {
             .get(&DataKey::BettingContract)
             .ok_or(PlatformError::Unauthorized)?;
             
-        let caller = env.invoker();
-        if caller != betting_contract {
-            return Err(PlatformError::Unauthorized);
-        }
+        betting_contract.require_auth();
         Ok(betting_contract)
     }
 
@@ -189,7 +186,7 @@ impl RenaissanceVaultContract {
 
         // Update user's balance
         let user_balance_key = DataKey::UserBalance(user.clone(), asset.clone());
-        let mut user_balance = env
+        let mut user_balance: UserBalance = env
             .storage()
             .persistent()
             .get(&user_balance_key)
@@ -202,7 +199,7 @@ impl RenaissanceVaultContract {
 
         // Update vault's total balance
         let vault_balance_key = DataKey::VaultBalance(asset.clone());
-        let mut vault_balance = env
+        let mut vault_balance: VaultBalance = env
             .storage()
             .persistent()
             .get(&vault_balance_key)
@@ -237,7 +234,7 @@ impl RenaissanceVaultContract {
 
         // Check user has sufficient available balance
         let user_balance_key = DataKey::UserBalance(user.clone(), asset.clone());
-        let mut user_balance = env
+        let mut user_balance: UserBalance = env
             .storage()
             .persistent()
             .get(&user_balance_key)
@@ -252,7 +249,7 @@ impl RenaissanceVaultContract {
         env.storage().persistent().set(&user_balance_key, &user_balance);
 
         let vault_balance_key = DataKey::VaultBalance(asset.clone());
-        let mut vault_balance = env
+        let mut vault_balance: VaultBalance = env
             .storage()
             .persistent()
             .get(&vault_balance_key)
@@ -288,7 +285,7 @@ impl RenaissanceVaultContract {
 
         // Check sufficient available balance
         let user_balance_key = DataKey::UserBalance(user.clone(), asset.clone());
-        let mut user_balance = env
+        let mut user_balance: UserBalance = env
             .storage()
             .persistent()
             .get(&user_balance_key)
@@ -312,7 +309,7 @@ impl RenaissanceVaultContract {
 
         // Update vault's totals
         let vault_balance_key = DataKey::VaultBalance(asset.clone());
-        let mut vault_balance = env
+        let mut vault_balance: VaultBalance = env
             .storage()
             .persistent()
             .get(&vault_balance_key)
@@ -352,7 +349,7 @@ impl RenaissanceVaultContract {
 
         // Update user's balances
         let user_balance_key = DataKey::UserBalance(winner.clone(), asset.clone());
-        let mut user_balance = env
+        let mut user_balance: UserBalance = env
             .storage()
             .persistent()
             .get(&user_balance_key)
@@ -363,7 +360,7 @@ impl RenaissanceVaultContract {
 
         // Update vault's totals
         let vault_balance_key = DataKey::VaultBalance(asset.clone());
-        let mut vault_balance = env
+        let mut vault_balance: VaultBalance = env
             .storage()
             .persistent()
             .get(&vault_balance_key)

@@ -1,0 +1,34 @@
+name: Generate contract bindings
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Stellar CLI
+        run: |
+          curl -fsSLO https://github.com/stellar/stellar-cli/releases/download/v26.1.0/stellar-cli-26.1.0-x86_64-unknown-linux-gnu.tar.gz
+          tar -xzf stellar-cli-26.1.0-x86_64-unknown-linux-gnu.tar.gz
+          sudo install stellar /usr/local/bin/stellar
+          stellar --version
+      - name: Generate clients
+        run: npm run generate:contracts
+      - name: Verify generated clients are current
+        run: git diff --exit-code -- packages/soroban-clients/src
+      - uses: actions/upload-artifact@v4
+        with:
+          name: soroban-clients
+          path: packages/soroban-clients/src
+      - name: Type-check clients
+        run: npm run typecheck:contracts

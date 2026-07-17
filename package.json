@@ -1,0 +1,8 @@
+{
+  "name": "renaissance-contracts",
+  "private": true,
+  "scripts": {
+    "generate:contracts": "node scripts/generate-contract-bindings.mjs",
+    "typecheck:contracts": "node scripts/typecheck-contract-bindings.mjs"
+  }
+}

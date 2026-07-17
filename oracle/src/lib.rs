@@ -8,7 +8,7 @@
 //! multi-sig confirmation (2-of-N required to finalize results).
 
 use renaissance_core::{get_event_topic_by_string, PlatformError};
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Vec};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, Env, Vec};
 
 // ── Match Result Structure ────────────────────────────────────────────────────
 
@@ -160,6 +160,7 @@ impl FootballOracleContract {
     /// Validates that submission is within the valid match window
     pub fn submit_result(
         env: Env,
+        oracle: Address,
         match_id: u64,
         home_score: u32,
         away_score: u32,
@@ -169,7 +170,8 @@ impl FootballOracleContract {
         Self::ensure_not_paused(&env).map_err(|_| OracleError::OracleUnauthorized)?;
         
         let oracles = Self::ensure_oracle(&env).map_err(|_| OracleError::OracleUnauthorized)?;
-        let caller = env.invoker();
+        oracle.require_auth();
+        let caller = oracle;
         
         // Validate caller is in the oracle list
         if !oracles.contains(&caller) {
@@ -216,11 +218,12 @@ impl FootballOracleContract {
 
     /// Confirm a pending match result (oracle only).
     /// When the second confirmation is received, the result is finalized.
-    pub fn confirm_result(env: Env, match_id: u64) -> Result<(), OracleError> {
+    pub fn confirm_result(env: Env, oracle: Address, match_id: u64) -> Result<(), OracleError> {
         Self::ensure_not_paused(&env).map_err(|_| OracleError::OracleUnauthorized)?;
         
         let oracles = Self::ensure_oracle(&env).map_err(|_| OracleError::OracleUnauthorized)?;
-        let caller = env.invoker();
+        oracle.require_auth();
+        let caller = oracle;
         
         // Validate caller is in the oracle list
         if !oracles.contains(&caller) {

@@ -41,17 +41,20 @@ use renaissance_core::PlatformError;
 /// `repr(u32)`).
 #[contracttype]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord)]
-#[repr(u32)]
 pub enum Outcome {
-    HomeWin = 0,
-    Draw = 1,
-    AwayWin = 2,
+    HomeWin,
+    Draw,
+    AwayWin,
 }
 
 impl Outcome {
     /// Pool index for the per-outcome `Vec<i128>` tracked in `MatchStats`.
     fn index(self) -> u32 {
-        self as u32
+        match self {
+            Self::HomeWin => 0,
+            Self::Draw => 1,
+            Self::AwayWin => 2,
+        }
     }
 }
 
@@ -72,7 +75,7 @@ pub struct Match {
     /// Set to `true` by the oracle in `settle_bet`.
     pub settled: bool,
     /// Final outcome — populated by `settle_bet`.
-    pub outcome: Option<Outcome>,
+    pub outcome: Option<u32>,
 }
 
 /// Aggregated match statistics used by `claim_payout` to compute payouts
@@ -161,7 +164,7 @@ impl RenaissanceBettingContract {
         Ok(())
     }
 
-    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), PlatformError> {
+    pub fn upgrade(env: Env, caller: Address, new_wasm_hash: BytesN<32>) -> Result<(), PlatformError> {
         let platform: Address = env
             .storage()
             .instance()
@@ -177,7 +180,7 @@ impl RenaissanceBettingContract {
             .instance()
             .get(&DataKey::TreasuryAdmin)
             .ok_or(PlatformError::Unauthorized)?;
-        let caller = env.invoker();
+        caller.require_auth();
         if caller != platform && caller != security && caller != treasury {
             return Err(PlatformError::Unauthorized);
         }
@@ -194,8 +197,8 @@ impl RenaissanceBettingContract {
 
         if approvals.len() >= 2 {
             env.storage().instance().set(&DataKey::WasmHash, &new_wasm_hash);
-            env.deployer().update_current_contract_wasm(&new_wasm_hash);
-            env.storage().instance().set(&DataKey::UpgradeApprovals, &Vec::new(&env));
+            env.deployer().update_current_contract_wasm(new_wasm_hash.clone());
+            env.storage().instance().set(&DataKey::UpgradeApprovals, &Vec::<Address>::new(&env));
             env.events()
                 .publish((Symbol::new(&env, "Upgraded"),), new_wasm_hash);
         } else {
@@ -406,7 +409,7 @@ impl RenaissanceBettingContract {
         }
 
         m.settled = true;
-        m.outcome = Some(outcome);
+        m.outcome = Some(outcome.index());
         env.storage().instance().set(&DataKey::Match(match_id), &m);
 
         env.events().publish(
@@ -454,7 +457,7 @@ impl RenaissanceBettingContract {
             return Err(PlatformError::ExpiredDeadline);
         }
         let winning_outcome = m.outcome.ok_or(PlatformError::InternalError)?;
-        if bet.outcome != winning_outcome {
+        if bet.outcome.index() != winning_outcome {
             return Err(PlatformError::InternalError);
         }
 
@@ -463,7 +466,7 @@ impl RenaissanceBettingContract {
             .instance()
             .get(&DataKey::Stats(match_id))
             .ok_or(PlatformError::InternalError)?;
-        let winning_pool = stats.pools.get(winning_outcome.index()).unwrap_or(0);
+        let winning_pool = stats.pools.get(winning_outcome).unwrap_or(0);
         let total_pool = stats
             .pools
             .get(0)

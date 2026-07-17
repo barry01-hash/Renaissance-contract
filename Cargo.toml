@@ -13,20 +13,16 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+authors = ["Renaissance Contributors"]
+license = "MIT"
 publish = false
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-soroban-sdk = "21.4.0"
-
 [workspace.dependencies]
-soroban-sdk = "20.0.0" # Matches standard Soroban stable runtime distributions
+soroban-sdk = "21.4.0"
 renaissance-core = { path = "./core" }
 
 [profile.release]
-opt-level = "z"     # Optimize aggressively for smallest binary size (crucial for Soroban)
+opt-level = "z"
 overflow-checks = true
 debug = false
 panic = "abort"

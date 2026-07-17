@@ -1,5 +1,7 @@
 #![no_std]
-use soroban_sdk::{contracterror, contracttype, Address, Symbol};
+use soroban_sdk::{contracterror, contracttype};
+
+pub use soroban_sdk::{Address, Symbol};
 
 /// Centralized platform error codes mapped cleanly across all child contract scopes
 #[contracterror]

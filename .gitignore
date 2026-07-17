@@ -1,6 +1,7 @@
 # Build artefacts
 /target/
-Cargo.lock
+
+# The workspace lockfile is committed for reproducible contract builds.
 
 # Test artefacts
 /tests/
